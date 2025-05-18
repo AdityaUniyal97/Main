@@ -7,16 +7,14 @@ import axios from 'axios'
 import { AppContext } from '../../context/AppContext';
 
 const AddCourse = () => {
-
   const editorRef = useRef(null);
   const quillRef = useRef(null);
+  const { backendUrl, getToken } = useContext(AppContext);
 
-  const { backendUrl, getToken } = useContext(AppContext)
-
-  const [courseTitle, setCourseTitle] = useState('')
-  const [coursePrice, setCoursePrice] = useState(0)
-  const [discount, setDiscount] = useState(0)
-  const [image, setImage] = useState(null)
+  const [courseTitle, setCourseTitle] = useState('');
+  const [coursePrice, setCoursePrice] = useState(0);
+  const [discount, setDiscount] = useState(0);
+  const [image, setImage] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [currentChapterId, setCurrentChapterId] = useState(null);
@@ -92,11 +90,10 @@ const AddCourse = () => {
 
   const handleSubmit = async (e) => {
     try {
-
       e.preventDefault();
-
       if (!image) {
-        toast.error('Thumbnail Not Selected')
+        toast.error('Thumbnail Not Selected');
+        return;
       }
 
       const courseData = {
@@ -105,38 +102,35 @@ const AddCourse = () => {
         coursePrice: Number(coursePrice),
         discount: Number(discount),
         courseContent: chapters,
-      }
+      };
 
-      const formData = new FormData()
-      formData.append('courseData', JSON.stringify(courseData))
-      formData.append('image', image)
+      const formData = new FormData();
+      formData.append('courseData', JSON.stringify(courseData));
+      formData.append('image', image);
 
-      const token = await getToken()
+      const token = await getToken();
 
-      const { data } = await axios.post(backendUrl + '/api/educator/add-course', formData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      const { data } = await axios.post(`${backendUrl}/api/educator/add-course`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (data.success) {
-        toast.success(data.message)
-        setCourseTitle('')
-        setCoursePrice(0)
-        setDiscount(0)
-        setImage(null)
-        setChapters([])
-        quillRef.current.root.innerHTML = ""
-      } else (
-        toast.error(data.message)
-      )
-
+        toast.success(data.message);
+        setCourseTitle('');
+        setCoursePrice(0);
+        setDiscount(0);
+        setImage(null);
+        setChapters([]);
+        quillRef.current.root.innerHTML = "";
+      } else {
+        toast.error(data.message);
+      }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     }
-
   };
 
   useEffect(() => {
-    // Initiate Quill only once
     if (!quillRef.current && editorRef.current) {
       quillRef.current = new Quill(editorRef.current, {
         theme: 'snow',
@@ -144,13 +138,10 @@ const AddCourse = () => {
     }
   }, []);
 
-  useEffect(() => {
-    console.log(chapters);
-  }, [chapters]);
-
   return (
     <div className='h-screen overflow-scroll flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0'>
       <form onSubmit={handleSubmit} className='flex flex-col gap-4 max-w-md w-full text-gray-500'>
+
         <div className='flex flex-col gap-1'>
           <p>Course Title</p>
           <input onChange={e => setCourseTitle(e.target.value)} value={courseTitle} type="text" placeholder='Type here' className='outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500' required />
@@ -163,9 +154,19 @@ const AddCourse = () => {
 
         <div className='flex items-center justify-between flex-wrap'>
           <div className='flex flex-col gap-1'>
-            <p>Course Price</p>
-            <input onChange={e => setCoursePrice(e.target.value)} value={coursePrice} type="number" placeholder='0' className='outline-none md:py-2.5 py-2 w-28 px-3 rounded border border-gray-500' required />
-          </ div>
+            <p>Course Price (INR ₹)</p>
+            <div className="flex items-center border border-gray-500 rounded px-3 md:py-2.5 py-2 w-32">
+              <span className="text-gray-500">₹</span>
+              <input
+                onChange={e => setCoursePrice(e.target.value)}
+                value={coursePrice}
+                type="number"
+                placeholder='0'
+                className="outline-none w-full pl-2 bg-transparent"
+                required
+              />
+            </div>
+          </div>
 
           <div className='flex md:flex-row flex-col items-center gap-3'>
             <p>Course Thumbnail</p>
@@ -182,7 +183,7 @@ const AddCourse = () => {
           <input onChange={e => setDiscount(e.target.value)} value={discount} type="number" placeholder='0' min={0} max={100} className='outline-none md:py-2.5 py-2 w-28 px-3 rounded border border-gray-500' required />
         </div>
 
-        {/* Adding Chapters & Lectures */}
+        {/* Chapters */}
         <div>
           {chapters.map((chapter, chapterIndex) => (
             <div key={chapterIndex} className="bg-white border rounded-lg mb-4">
@@ -247,7 +248,8 @@ const AddCourse = () => {
                 <div className="flex gap-2 my-4">
                   <p>Is Preview Free?</p>
                   <input
-                    type="checkbox" className='mt-1 scale-125'
+                    type="checkbox"
+                    className='mt-1 scale-125'
                     checked={lectureDetails.isPreviewFree}
                     onChange={(e) => setLectureDetails({ ...lectureDetails, isPreviewFree: e.target.checked })}
                   />
